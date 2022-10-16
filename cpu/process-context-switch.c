@@ -1,5 +1,5 @@
 /*
- * 5a.c: context switching between processes
+ * process-context-switch.c: context switching between processes
  *
  * Author: Tianyang Zhou <t7zhou@ucsd.edu>
  *

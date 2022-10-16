@@ -1,5 +1,5 @@
 /*
- * 5b.c: context switching between kernel threads
+ * thread-context-switch.c: context switching between kernel threads
  *
  * Author: Tianyang Zhou <t7zhou@ucsd.edu>
  *

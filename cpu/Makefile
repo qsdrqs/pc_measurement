@@ -4,6 +4,7 @@
 #source file
 SOURCE  := $(wildcard *.c) $(wildcard *.cpp)
 OBJS    := $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCE)))
+ASSEMBLY:= $(patsubst %.c,%.S,$(patsubst %.cpp,%.S,$(SOURCE)))
 
 #target you can change test to what you want
 
@@ -35,6 +36,10 @@ rebuild: veryclean everything
 clean :
 	rm -rf build
 
-$(TARGET) :
+$(ASSEMBLY) :
 	if ! [ -d build ]; then mkdir build; fi
-	$(CC) $(CXXFLAGS) -o build/$@ $@.c $(LDFLAGS) -l $(LIBS)
+	$(CC) $(CXXFLAGS) -o build/$@ $(patsubst %.S,%.c,$@) -S $(LDFLAGS) -l $(LIBS)
+
+$(TARGET) : $(ASSEMBLY)
+	if ! [ -d build ]; then mkdir build; fi
+	$(CC) $(CXXFLAGS) -o build/$@ build/$@.S $(LDFLAGS) -l $(LIBS)

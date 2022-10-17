@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
             "of pipe: "
             "%lu cycles\n",
             srw2_sum / N);
-        uint64_t context_switching_time = (srw2_sum / N - rw_sum / N) / 2;
+        uint64_t context_switching_time = (srw2_sum / N - 2 * rw_sum / N + 27) / 2;
         printf("average time of context switching: %lu cycles\n",
                context_switching_time);
         close(pipefd[1]);

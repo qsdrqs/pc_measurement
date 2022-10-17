@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define N 5000
+#define N 1000000
 
 int pipefd[2];   // pipefd[0] is for reading, pipefd[1] is for writing
 int pipefd2[2];  // pipefd2[0] is for reading, pipefd2[1] is for writing
@@ -82,7 +82,7 @@ void *context_switch(void *thread_id) {
             "of pipe: "
             "%lu cycles\n",
             srw2_sum / N);
-        uint64_t context_switching_time = (srw2_sum / N - rw_sum / N) / 2;
+        uint64_t context_switching_time = (srw2_sum / N - 2 * rw_sum / N + 27) / 2;
         printf("average time of context switching: %lu cycles\n",
                context_switching_time);
         close(pipefd[1]);

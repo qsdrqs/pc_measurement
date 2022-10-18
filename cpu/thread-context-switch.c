@@ -49,7 +49,7 @@ void *context_switch(void *thread_id) {
     close(pipefd2[1]);
     close(pipefd[0]);
 
-    return 0;
+    return NULL;
 }
 
 int main(int argc, char *argv[]) {

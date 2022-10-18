@@ -8,6 +8,7 @@ def main():
     data = data[:-1]
 
     data = [float(i) for i in data]
+    data = [i-47 for i in data] # 47 is the measurement overhead
 
     mean = statistics.mean(data)
     sd = statistics.stdev(data)

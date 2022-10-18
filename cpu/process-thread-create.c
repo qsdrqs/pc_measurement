@@ -13,7 +13,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define N 10000
+#define N 50000
 
 #define MEASURE_START()                                                  \
     asm volatile(                                                        \
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("process creation and run time: %lu\n", process_cycles / N - 47);
+    printf("process creation and run time: %lu\n", process_cycles / N);
 
     /***********************
      * Thread Measurement *
@@ -89,6 +89,6 @@ int main(int argc, char *argv[]) {
                          (((uint64_t)cycles_high0 << 32) | cycles_low0);
     }
 
-    printf("thread creation and run time: %lu\n", thread_cycles / N - 47);
+    printf("thread creation and run time: %lu\n", thread_cycles / N);
 
 }

@@ -1,28 +1,9 @@
 #include <stdio.h>
 #include <linux/module.h> 
 #include <linux/kernel.h> 
-//#include <linux/init.h> 
-//#include <linux/hardirq.h>
-//#include <linux/preempt.h>
 #include <linux/sched.h>
 #include <stdint.h>
-/*asm volatile ("cpuid\n\t"
-		"rdtsc\n\t"
-		"mov %%edx, %0\n\t"
-		"mov %%eax, %1\n\t"
-		: "=r" (cycles_high0), "=r" (cycles_low0)
-		:: "%rax", "%rbx", "%rcx", "%rdx");
-*/
-/* code to measure */
-/*
-asm volatile ("rdtscp\n\t"
-		"mov %%edx, %0\n\t"
-		"mov %%eax, %1\n\t"
-		"cpuid\n\t"
-		: "=r" (cycles_high1), "=r" (cycles_low1)
-		:: "%rax"
-		, "%rbx", "%rcx", "%rdx");
-*/
+
 int main(int argc, char *argv[]){
 
 	int record[1000000];
@@ -49,7 +30,7 @@ int main(int argc, char *argv[]){
 		start = (((uint64_t)high0 << 32) | low0);
 		end = (((uint64_t)high1 << 32) | low1);
 		record[i] = end - start;
-		//printk(KERN_INFO "\n %llu", end-start);
+		
 	}
 	
 	for(int i=0;i<1000000;i++){

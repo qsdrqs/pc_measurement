@@ -2,28 +2,9 @@
 #include <stdio.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
-//#include <linux/init.h>
-////#include <linux/hardirq.h>
-/////#include <linux/preempt.h>
 #include <linux/sched.h>
 #include <stdint.h>
-/*asm volatile ("cpuid\n\t"
-          "rdtsc\n\t"
-                  "mov %%edx, %0\n\t"
-                          "mov %%eax, %1\n\t"
-                                  : "=r" (cycles_high0), "=r" (cycles_low0)
-                                          :: "%rax", "%rbx", "%rcx", "%rdx");
-                                          */
-/* code to measure */
-/*
-  asm volatile ("rdtscp\n\t"
-          "mov %%edx, %0\n\t"
-                  "mov %%eax, %1\n\t"
-                          "cpuid\n\t"
-                                  : "=r" (cycles_high1), "=r" (cycles_low1)
-                                          :: "%rax"
-                                                  , "%rbx", "%rcx", "%rdx");
-                                                  */
+
 void foo0(){}
 void foo1(int a){}
 void foo2(int a, int b){}
@@ -62,7 +43,9 @@ int main(int argc, char *argv[]){
 					  "mov %%eax, %1\n\t"
 				      : "=r" (high0), "=r" (low0)
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
-		foo0();
+		for(int j=0;j<1000;j++){	
+			foo0();
+		}
 		asm volatile ("rdtscp\n\t"
 			          "mov %%edx, %0\n\t"
 					  "mov %%eax, %1\n\t"
@@ -71,9 +54,8 @@ int main(int argc, char *argv[]){
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
 	 	start = (((uint64_t)high0 << 32) | low0);
 	    end = (((uint64_t)high1 << 32) | low1);
-//	printk(KERN_INFO "\n %llu", end-start);
-    //printf("\n foo0: %lu", end-start);
-		record0[i] = end-start;
+
+		record0[i] = (end-start)/1000;
 
 		asm volatile ("cpuid\n\t"
 					  "rdtsc\n\t"
@@ -81,7 +63,9 @@ int main(int argc, char *argv[]){
 				      "mov %%eax, %1\n\t"
 					  : "=r" (high0), "=r" (low0)
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
-		foo1(a);
+		for(int j=0;j<1000;j++){
+			foo1(a);
+		}
 		asm volatile ("rdtscp\n\t"
 					  "mov %%edx, %0\n\t"
 			          "mov %%eax, %1\n\t"
@@ -90,9 +74,8 @@ int main(int argc, char *argv[]){
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
 		start = (((uint64_t)high0 << 32) | low0);
 		end = (((uint64_t)high1 << 32) | low1);
-//	printk(KERN_INFO "\n %llu", end-start);
-   // printf("\n foo1: %lu", end-start);
-		record1[i] = end-start;
+
+		record1[i] = (end-start)/1000;
 
 	    asm volatile ("cpuid\n\t"
 			          "rdtsc\n\t"
@@ -100,7 +83,9 @@ int main(int argc, char *argv[]){
 					  "mov %%eax, %1\n\t"
 					  : "=r" (high0), "=r" (low0)
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
-		foo2(a, b);
+		for(int j=0;j<1000;j++){
+			foo2(a, b);
+		}
 	    asm volatile ("rdtscp\n\t"
 		              "mov %%edx, %0\n\t"
 					  "mov %%eax, %1\n\t"
@@ -109,9 +94,8 @@ int main(int argc, char *argv[]){
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
 		start = (((uint64_t)high0 << 32) | low0);
 		end = (((uint64_t)high1 << 32) | low1);
-//	printk(KERN_INFO "\n %llu", end-start);
-   // printf("\n foo2: %lu", end-start);
-	    record2[i] = end-start;
+
+	    record2[i] = (end-start)/1000;
 
 	    asm volatile ("cpuid\n\t"
 		              "rdtsc\n\t"
@@ -119,7 +103,9 @@ int main(int argc, char *argv[]){
 					  "mov %%eax, %1\n\t"
 					  : "=r" (high0), "=r" (low0)
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
-		foo3(a, b, c);
+		for(int j=0;j<1000;j++){
+			foo3(a, b, c);
+		}
 		asm volatile ("rdtscp\n\t"
 			          "mov %%edx, %0\n\t"
 					  "mov %%eax, %1\n\t"
@@ -128,9 +114,8 @@ int main(int argc, char *argv[]){
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
 	    start = (((uint64_t)high0 << 32) | low0);
 		end = (((uint64_t)high1 << 32) | low1);
-//	printk(KERN_INFO "\n %llu", end-start);
-    //printf("\n foo3: %lu", end-start);
-		record3[i] = end-start;
+
+		record3[i] = (end-start)/1000;
 
 	    asm volatile ("cpuid\n\t"
 			 		  "rdtsc\n\t"
@@ -138,7 +123,9 @@ int main(int argc, char *argv[]){
 					  "mov %%eax, %1\n\t"
 				  	  : "=r" (high0), "=r" (low0)
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
-		foo4(a, b, c, d);
+		for(int j=0;j<1000;j++){
+			foo4(a, b, c, d);
+		}
 	    asm volatile ("rdtscp\n\t"
 		              "mov %%edx, %0\n\t"
 					  "mov %%eax, %1\n\t"
@@ -147,9 +134,8 @@ int main(int argc, char *argv[]){
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
 	    start = (((uint64_t)high0 << 32) | low0);
 		end = (((uint64_t)high1 << 32) | low1);
-//	printk(KERN_INFO "\n %llu", end-start);
-    //printf("\n foo4: %lu", end-start);
-		record4[i] = end-start;
+
+		record4[i] = (end-start)/1000;
 
 	    asm volatile ("cpuid\n\t"
 		              "rdtsc\n\t"
@@ -157,7 +143,9 @@ int main(int argc, char *argv[]){
 					  "mov %%eax, %1\n\t"								                   
 					  : "=r" (high0), "=r" (low0)
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
-		foo5(a, b, c, d, e);
+		for(int j=0;j<1000;j++){
+			foo5(a, b, c, d, e);
+		}
 		asm volatile ("rdtscp\n\t"
 					  "mov %%edx, %0\n\t"
 					  "mov %%eax, %1\n\t"
@@ -166,9 +154,8 @@ int main(int argc, char *argv[]){
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
 		start = (((uint64_t)high0 << 32) | low0);
 		end = (((uint64_t)high1 << 32) | low1);
-//	printk(KERN_INFO "\n %llu", end-start);
-    //printf("\n foo5: %lu", end-start);
-		record5[i] = end-start;
+
+		record5[i] = (end-start)/1000;
 
 	    asm volatile ("cpuid\n\t"
 		              "rdtsc\n\t"
@@ -176,8 +163,10 @@ int main(int argc, char *argv[]){
 				      "mov %%eax, %1\n\t"
 					  : "=r" (high0), "=r" (low0)
 				 	  :: "%rax", "%rbx", "%rcx", "%rdx");
-		foo6(a, b, c, d, e, f);
-	    asm volatile ("rdtscp\n\t"
+		for(int j=0;j<1000;j++){
+			foo6(a, b, c, d, e, f);
+	    }
+		asm volatile ("rdtscp\n\t"
 		              "mov %%edx, %0\n\t"
 			          "mov %%eax, %1\n\t"
 					  "cpuid\n\t"
@@ -185,9 +174,8 @@ int main(int argc, char *argv[]){
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
 	    start = (((uint64_t)high0 << 32) | low0);
 		end = (((uint64_t)high1 << 32) | low1);
-//	printk(KERN_INFO "\n %llu", end-start);
-    //printf("\n foo6: %lu", end-start);
-		record6[i] = end-start;
+    
+		record6[i] = (end-start)/1000;
 
 	    asm volatile ("cpuid\n\t"
 		              "rdtsc\n\t"
@@ -195,7 +183,9 @@ int main(int argc, char *argv[]){
 					  "mov %%eax, %1\n\t"
 					  : "=r" (high0), "=r" (low0)
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
-		foo7(a, b, c, d, e, f, g);
+		for(int j=0;j<1000;j++){
+			foo7(a, b, c, d, e, f, g);
+		}
 		asm volatile ("rdtscp\n\t"
 			          "mov %%edx, %0\n\t"
 					  "mov %%eax, %1\n\t"
@@ -204,9 +194,8 @@ int main(int argc, char *argv[]){
 					  :: "%rax", "%rbx", "%rcx", "%rdx");
 		start = (((uint64_t)high0 << 32) | low0);
 		end = (((uint64_t)high1 << 32) | low1);
-//	printk(KERN_INFO "\n %llu", end-start);
-    //printf("\n foo7: %lu", end-start);
-		record7[i] = end-start;
+
+		record7[i] = (end-start)/1000;
 	}
 
 

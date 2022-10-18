@@ -90,5 +90,5 @@ int main(int argc, char *argv[]) {
     }
 
     printf("thread creation and run time: %lu\n", thread_cycles / N);
-
+    return 0;
 }

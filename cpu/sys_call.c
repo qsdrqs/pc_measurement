@@ -26,7 +26,7 @@
 		  :: "%rax", "%rbx", "%rcx", "%rdx")
 
 int const NUM_ITER = 1000000;  // number of iteration per experiment run
-int const NUM_TRIAL = 10; // number of trials
+int const NUM_TRIAL = 100; // number of trials
 
 u_int32_t cycles_high0;
 u_int32_t cycles_low0;

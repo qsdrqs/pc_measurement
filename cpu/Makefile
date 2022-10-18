@@ -35,6 +35,7 @@ rebuild: veryclean everything
 
 clean :
 	rm -rf build
+	rm sys_call_results.txt
 
 $(ASSEMBLY) :
 	if ! [ -d build ]; then mkdir build; fi

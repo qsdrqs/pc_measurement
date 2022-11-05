@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int main(int argc, char *argv[]) {
+void run_test(int* res) {
     // FILE *my_file;
     // int mmap_length = 1;
     // char *prefix = "memory_Q3";
@@ -106,13 +106,34 @@ int main(int argc, char *argv[]) {
         record_sum += record[i];
     }
 
-    printf("\n %llu", record_sum / 100);
-
-    for (int i = 0; i < 100; i++) {
-        sqr_sum += pow(record[i] - record_sum / 100, 2);
-    }
-    my_std = sqrt(sqr_sum / 100);
-    printf("\n %f", my_std);
+    printf("%llu\n", record_sum / 100);
+    *res = record_sum / 100;
 
     system("rm -rf ./build/Q3_tmp");
+}
+
+int main(int argc, char *argv[]) {
+    int tmp;
+    int res[10];
+    for (int i = 0; i < 10; ++i) {
+        run_test(&tmp);
+        res[i] = tmp;
+    }
+
+    // calculate standard deviation
+    double mean = 0;
+    for (int i = 0; i < 10; ++i) {
+        mean += res[i];
+    }
+    mean /= 10;
+
+    double std = 0;
+    for (int i = 0; i < 10; ++i) {
+        std += (res[i] - mean) * (res[i] - mean);
+    }
+    std /= 10;
+    std = sqrt(std);
+
+    printf("page fault service time: %lf +- %lf cpu cycles\n", mean, std);
+    return 0;
 }

@@ -39,11 +39,10 @@ clean :
 
 preprocess :
 	python ram-bandwidth-helper.py
+	if ! [ -d build ]; then mkdir build; fi
 
 $(ASSEMBLY) : preprocess
-	if ! [ -d build ]; then mkdir build; fi
 	$(CC) $(CXXFLAGS) -o build/$@ $(patsubst %.S,%.c,$@) -S $(LDFLAGS) -l $(LIBS)
 
 $(TARGET) : $(ASSEMBLY)
-	if ! [ -d build ]; then mkdir build; fi
 	$(CC) $(CXXFLAGS) -o build/$@ build/$@.S $(LDFLAGS) -l $(LIBS)

@@ -31,11 +31,14 @@ int main(int argc, char *argv[]){
 
 //	printf("start looping");
 
+	// make directory
+	system("mkdir ./build/Q3_tmp");
+
 	for(int i=0;i<100;i++){
 		
 		FILE *my_file = NULL;
 		//char file_path[100] = "~/cse221_project/cpu/memory_Q3_dir/memory_Q3_run1_";
-		char file_path[100] = "memory_Q3_run4_";
+		char file_path[100] = "./build/Q3_tmp/memory_Q3_run4_";
 		char * ptr;
 		char *p;
 
@@ -64,7 +67,7 @@ int main(int argc, char *argv[]){
 		p = mmap(NULL, 4000*sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, fileno(my_file), 0);
 		
 		if(p == MAP_FAILED){
-			printf("\n haha");
+			perror("failed to call mmap");
 		}
 
 		ftruncate(fileno(my_file), 4000*sizeof(int));
@@ -108,4 +111,6 @@ int main(int argc, char *argv[]){
 	}
 	my_std = sqrt(sqr_sum/100);
 	printf("\n %f", my_std);  
+
+	system("rm -rf ./build/Q3_tmp");
 } 

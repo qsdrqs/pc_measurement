@@ -11,6 +11,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+uint32_t cycles_low0;
+uint32_t cycles_high0;
+uint32_t cycles_low1;
+uint32_t cycles_high1;
+
 // 1 Mega
 #define N 1024 * 1024
 
@@ -37,11 +42,6 @@
         (((uint64_t)cycles_high0 << 32) | cycles_low0)
 
 void run_test(int* test_res) {
-    uint32_t cycles_low0;
-    uint32_t cycles_high0;
-    uint32_t cycles_low1;
-    uint32_t cycles_high1;
-
     char* buf = malloc(N * 1024 * sizeof(char));   // malloc 1GB
     char* buf2 = malloc(N * 1024 * sizeof(char));  // malloc 1GB
     uint64_t freq = 3.6 * pow(10, 9);

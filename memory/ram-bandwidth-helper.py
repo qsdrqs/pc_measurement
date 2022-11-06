@@ -11,5 +11,5 @@ if __name__ == '__main__':
     f = open('ram-bandwidth-w-helper.h', 'w')
     g = open('ram-bandwidth-rw-helper.h', 'w')
     for i in range(1024):
-        f.write("memset(buf + " + str(i) + " * N, 42, N * sizeof(char));\n")
-        g.write("memcpy(buf2 + " + str(i) + " * N, buf + " + str(i) + " * N, N * sizeof(char));\n")
+        f.write("memset(buf + {} * N, 42, N * sizeof(char));\n".format(i))
+        g.write("memcpy(buf2 + {} * N, buf + {} * N, N * sizeof(char));\n".format(i, i))

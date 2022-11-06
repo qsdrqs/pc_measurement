@@ -1,4 +1,6 @@
 TARGET := $(patsubst %,%.build,$(wildcard *))
 
+all: $(TARGET)
+
 $(TARGET):
-	cd $(patsubst %.build,%,$@) && make
+	if [[ -d $(patsubst %.build,%,$@) ]]; then cd $(patsubst %.build,%,$@) && make; fi

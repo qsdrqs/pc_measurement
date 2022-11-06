@@ -35,10 +35,11 @@ rebuild: veryclean everything
 
 clean :
 	rm -rf build
-	rm sys_call_results.txt
+	# rm sys_call_results.txt
+	rm access_latency_results.txt
 
 preprocess :
-	python ram-bandwidth-helper.py
+	python3 ram-bandwidth-helper.py
 	if ! [ -d build ]; then mkdir build; fi
 
 $(ASSEMBLY) : preprocess

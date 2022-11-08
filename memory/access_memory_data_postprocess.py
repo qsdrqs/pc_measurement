@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 def main():
     results = defaultdict(list)
 
-    f = open("./memory/access_latency_results.txt", "r")
+    f = open("./access_latency_results.txt", "r")
     for l in f.readlines():
         temp = re.findall("\d*,\d*,\d*\.\d*", l)
         for instance in temp:

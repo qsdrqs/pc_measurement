@@ -62,17 +62,17 @@ double run_test() {
         START_MEASUREMENT();
         n = send(sockfd, buffer + ONCE * i, ONCE, 0);
         END_MEASUREMENT();
+
+        if (n < 0) {
+            printf("Write failed\n");
+            close(sockfd);
+            return -1;
+        }
         cycles += GET_MEASUREMENT();
     }
 
 
     puts("finish send data");
-
-    if (n < 0) {
-        printf("Write failed\n");
-        close(sockfd);
-        return -1;
-    }
 
     printf("Cycles: %lu\n", cycles);
     printf("Time: %f s\n", cycles / (FREQ * 1e9));

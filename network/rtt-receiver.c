@@ -13,8 +13,6 @@ uint32_t cycles_high0;
 uint32_t cycles_low1;
 uint32_t cycles_high1;
 
-#define ONCE (64 * 1024)
-#define TOTAL (ONCE * 1024)
 
 int main(int argc, char *argv[]) {
     int sockfd;
@@ -49,33 +47,35 @@ int main(int argc, char *argv[]) {
 
     // test for 10 times
     for (int i = 0; i < 10; ++i) {
-        char *buffer = (char *)malloc(TOTAL);  // 64 MB
-        memset(buffer, 0, TOTAL);
+        char buffer[1] = {0};
+        char buffer2[1] = {'b'};
 
         // tell sender ready to receive
         int ready = 1;
         send(connfd, &ready, sizeof(int), 0);
 
-        for (int i = 0; i < TOTAL / ONCE; ++i) {
-            recv(connfd, buffer + ONCE * i, ONCE, MSG_WAITALL);
+        for (int i = 0; i < 1000; ++i) {
+            // start measurement
+            recv(connfd, buffer, 1, MSG_WAITALL);
+            send(connfd, buffer2, 1, 0);
+            // end measurement
         }
 
         puts("fininsh receive data");
 
-
         // check the correctness of the data
-        for (uint64_t i = 0; i < TOTAL; i++) {
-            if (buffer[i] != 'a') {
-                fprintf(stderr, "Data is corrupted at %ld, which is %d\n", i, (int)buffer[i]);
-                close(connfd);
-                close(sockfd);
-                return -1;
-            }
+        if (buffer[0] != 'a') {
+            fprintf(stderr, "Data is corrupted\n");
+            close(connfd);
+            close(sockfd);
+            return -1;
         }
         puts("check successful");
-        free(buffer);
     }
 
+
+    // sleep for 1 second to make socket data be flushed
+    sleep(1);
     close(connfd);
     close(sockfd);
 

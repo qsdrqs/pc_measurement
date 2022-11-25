@@ -64,7 +64,7 @@ double run_test() {
         END_MEASUREMENT();
 
         if (n < 0) {
-            printf("Write failed\n");
+            perror("Write failed\n");
             close(sockfd);
             return -1;
         }
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
     servaddr.sin_port = htons(5000);
 
     if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
-        printf("Connection failed\n");
+        perror("Connection failed\n");
         close(sockfd);
         return -1;
     }

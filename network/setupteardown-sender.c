@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <math.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,7 +8,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <math.h>
 
 uint32_t cycles_low0;
 uint32_t cycles_high0;
@@ -36,50 +36,54 @@ uint32_t cycles_high1;
     (((uint64_t)cycles_high1 << 32) | cycles_low1) - \
         (((uint64_t)cycles_high0 << 32) | cycles_low0)
 
+// 3.6 GHz
 #define FREQ 3.6
 
 int sockfd;
 struct sockaddr_in servaddr;
 
-double run_test() {
-    char buffer[1] = {'a'};
-    char buffer2[1] = {0};
-
+void run_test(double *res) {
+    const int rounds = 100;
     int n = 0;
-    uint64_t cycles = 0;
+    uint64_t connect_cycles = 0;
+    uint64_t disconnect_cycles = 0;
 
-    // wait for receiver ready
-    int ready = 0;
-    recv(sockfd, &ready, sizeof(int), 0);
-    while (ready != 1) {
-        recv(sockfd, &ready, sizeof(int), 0);
-    }
-
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < rounds; ++i) {
+        // setup
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        // wait until server start to listen
+        usleep(100);
         START_MEASUREMENT();
-        n = send(sockfd, buffer, 1, 0);
-        recv(sockfd, buffer2, 1, MSG_WAITALL);
+        n = connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+        END_MEASUREMENT();
+        if (n < 0) {
+            perror("Connection failed\n");
+            close(sockfd);
+            exit(-1);
+        }
+        connect_cycles += GET_MEASUREMENT();
+
+        // teardown
+        START_MEASUREMENT();
+        n = close(sockfd);
         END_MEASUREMENT();
 
         if (n < 0) {
-            perror("Write failed\n");
-            close(sockfd);
-            return -1;
+            perror("Close failed\n");
+            exit(-1);
         }
-        cycles += GET_MEASUREMENT();
+        disconnect_cycles += GET_MEASUREMENT();
     }
 
+    printf("Connect Cycles: %lu\n", connect_cycles / rounds);
+    printf("Disconnect Cycles: %lu\n", disconnect_cycles / rounds);
+    printf("Connect Time: %f ms\n",
+           ((double)connect_cycles / rounds) / (FREQ * 1e6));
+    printf("Disconnect Time: %f ms\n",
+           ((double)disconnect_cycles / rounds) / (FREQ * 1e6));
 
-    puts("finish a round trip");
-
-    if (buffer2[0] != 'b') {
-        perror("Data is corrupted");
-    }
-
-    printf("Cycles: %lu\n", cycles);
-    printf("Time: %f ms\n", cycles / (FREQ * 1e9));
-
-    return cycles / (FREQ * 1e9);
+    res[0] = ((double)connect_cycles / rounds) / (FREQ * 1e6);
+    res[1] = ((double)disconnect_cycles / rounds) / (FREQ * 1e6);
 }
 
 int main(int argc, char *argv[]) {
@@ -91,36 +95,40 @@ int main(int argc, char *argv[]) {
     servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
     servaddr.sin_port = htons(5000);
 
-    if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
-        perror("Connection failed\n");
-        close(sockfd);
-        return -1;
-    }
-
     // start testing
     double res[10];
+    double res2[10];
     for (int i = 0; i < 10; ++i) {
-        res[i] = run_test();
+        double tmp[2];
+        run_test(tmp);
+        res[i] = tmp[0];
+        res2[i] = tmp[1];
         puts("");
     }
 
     // calculate standard deviation
     double mean = 0;
+    double mean2 = 0;
     for (int i = 0; i < 10; ++i) {
         mean += res[i];
+        mean2 += res2[i];
     }
     mean /= 10;
+    mean2 /= 10;
 
     double std = 0;
+    double std2 = 0;
     for (int i = 0; i < 10; ++i) {
         std += (res[i] - mean) * (res[i] - mean);
+        std2 += (res2[i] - mean2) * (res2[i] - mean2);
     }
     std /= 10;
+    std2 /= 10;
     std = sqrt(std);
+    std2 = sqrt(std2);
 
-    printf("RTT: %lf +- %lf ms\n", mean, std);
+    printf("connect time: %lf +- %lf ms\n", mean, std);
+    printf("disconnect time: %lf +- %lf ms\n", mean2, std2);
 
-    close(sockfd);
     return 0;
 }
-

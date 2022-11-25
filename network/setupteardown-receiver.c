@@ -37,6 +37,8 @@ int main(int argc, char *argv[]) {
     const int rounds = 100;
     listen(sockfd, rounds);  // only one client
     int connfd;
+
+    char end[1];
     while (1) {
         connfd = accept(sockfd, (struct sockaddr *)&cliaddr, &cliaddr_len);
         if (connfd < 0) {
@@ -44,6 +46,16 @@ int main(int argc, char *argv[]) {
             close(connfd);
             close(sockfd);
             return -1;
+        }
+
+        // whether to end the program
+        recv(connfd, end, 1, 0);
+        if (end[0] == 'a') {
+            // end the program
+            puts("ending the program");
+            close(connfd);
+            close(sockfd);
+            return 0;
         }
     }
     printf("client connected from %s:%d\n", inet_ntoa(cliaddr.sin_addr),

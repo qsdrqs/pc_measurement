@@ -63,6 +63,9 @@ void run_test(double *res) {
         }
         connect_cycles += GET_MEASUREMENT();
 
+        // send data (b means not to end the server)
+        send(sockfd, "b", 1, 0);
+
         // teardown
         START_MEASUREMENT();
         n = close(sockfd);
@@ -129,6 +132,20 @@ int main(int argc, char *argv[]) {
 
     printf("connect time: %lf +- %lf ms\n", mean, std);
     printf("disconnect time: %lf +- %lf ms\n", mean2, std2);
+
+    // end server
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    int n = connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+    if (n < 0) {
+        perror("Connection failed\n");
+        close(sockfd);
+        exit(-1);
+    }
+    char end[1] = "a"; // a means end the server
+    while(send(sockfd, end, 1, 0) >= 0) {
+        usleep(100);
+    }
+    close(sockfd);
 
     return 0;
 }

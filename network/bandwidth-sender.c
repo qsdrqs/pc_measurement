@@ -37,7 +37,8 @@ uint32_t cycles_high1;
         (((uint64_t)cycles_high0 << 32) | cycles_low0)
 
 #define FREQ 3.6
-#define TOTAL (1024 * 1024 * 1024)
+#define ONCE (64 * 1024)
+#define TOTAL (ONCE * 1024)
 
 int sockfd;
 struct sockaddr_in servaddr;
@@ -48,11 +49,22 @@ double run_test() {
 
     int n = 0;
     uint64_t cycles = 0;
-    sleep(1);
-    START_MEASUREMENT();
-    n = send(sockfd, buffer, TOTAL, 0);
-    END_MEASUREMENT();
-    cycles = GET_MEASUREMENT();
+
+    // wait for receiver ready
+    int ready = 0;
+    recv(sockfd, &ready, sizeof(int), 0);
+    while (ready != 1) {
+        recv(sockfd, &ready, sizeof(int), 0);
+    }
+
+
+    for (int i = 0; i < TOTAL / ONCE; ++i) {
+        START_MEASUREMENT();
+        n = send(sockfd, buffer + ONCE * i, ONCE, 0);
+        END_MEASUREMENT();
+        cycles += GET_MEASUREMENT();
+    }
+
 
     puts("finish send data");
 
@@ -64,15 +76,14 @@ double run_test() {
 
     printf("Cycles: %lu\n", cycles);
     printf("Time: %f s\n", cycles / (FREQ * 1e9));
-    printf("Bandwidth: %f MB/s\n", 1000 / (cycles / (FREQ * 1e9)));
+    printf("Bandwidth: %f MB/s\n", 64 / (cycles / (FREQ * 1e9)));
     free(buffer);
 
-    return 1000 / (cycles / (FREQ * 1e9));
+    return 64 / (cycles / (FREQ * 1e9));
 }
 
 int main(int argc, char *argv[]) {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &(int){TOTAL}, sizeof(uint64_t));
 
     bzero(&servaddr, sizeof(servaddr));
 
@@ -107,7 +118,7 @@ int main(int argc, char *argv[]) {
     std /= 10;
     std = sqrt(std);
 
-    printf("Bandwidth: %lf +- %lf ns\n", mean, std);
+    printf("Bandwidth: %lf +- %lf MB/s\n", mean, std);
 
     close(sockfd);
     return 0;

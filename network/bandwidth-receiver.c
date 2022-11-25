@@ -13,12 +13,13 @@ uint32_t cycles_high0;
 uint32_t cycles_low1;
 uint32_t cycles_high1;
 
-#define TOTAL (1024 * 1024 * 1024)
+#define ONCE (64 * 1024)
+#define TOTAL (ONCE * 1024)
 
 int main(int argc, char *argv[]) {
     int sockfd;
     struct sockaddr_in servaddr, cliaddr;
-    socklen_t cliaddr_len;
+    socklen_t cliaddr_len = sizeof(cliaddr);
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -37,25 +38,26 @@ int main(int argc, char *argv[]) {
     puts("start listening on port 5000");
     listen(sockfd, 1);  // only one client
     int connfd = accept(sockfd, (struct sockaddr *)&cliaddr, &cliaddr_len);
-    printf("client connected from %s:%d\n", inet_ntoa(cliaddr.sin_addr),
-           ntohs(cliaddr.sin_port));
     if (connfd < 0) {
         perror("accept failed");
         close(connfd);
         close(sockfd);
         return -1;
     }
+    printf("client connected from %s:%d\n", inet_ntoa(cliaddr.sin_addr),
+           ntohs(cliaddr.sin_port));
 
     // test for 10 times
     for (int i = 0; i < 10; ++i) {
-        char *buffer = (char *)malloc(TOTAL);  // 1GB
+        char *buffer = (char *)malloc(TOTAL);  // 64 MB
         memset(buffer, 0, TOTAL);
 
-        if (recv(connfd, buffer, TOTAL, MSG_WAITALL) < 0) {
-            perror("receive failed\n");
-            close(connfd);
-            close(sockfd);
-            return -1;
+        // tell sender ready to receive
+        int ready = 1;
+        send(connfd, &ready, sizeof(int), 0);
+
+        for (int i = 0; i < TOTAL / ONCE; ++i) {
+            recv(connfd, buffer + ONCE * i, ONCE, MSG_WAITALL);
         }
 
         puts("fininsh receive data");

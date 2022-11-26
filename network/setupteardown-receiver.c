@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
     puts("start listening on port 5000");
     const int rounds = 100;
-    listen(sockfd, rounds);  // only one client
+    listen(sockfd, 1);  // only one client
     int connfd;
 
     char end[1];

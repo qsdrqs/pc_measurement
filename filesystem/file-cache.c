@@ -83,9 +83,9 @@ void run_test(double* result) {
         uint64_t cycles = GET_MEASUREMENT();
         printf("cycles: %lu\n", cycles);
 
-        // transform to nanoseconds
-        printf("time: %f ms\n", cycles / (FREQ * 1e6));
-        result[i] = cycles / (FREQ * 1e6);
+        // transform to us
+        printf("time: %f us\n", cycles / (FREQ * 1e3));
+        result[i] = cycles / (FREQ * 1e3);
     }
 }
 
@@ -95,7 +95,11 @@ int main(int argc, char *argv[])
         printf("You need to be root to run this test\n");
         exit(1);
     }
-    double result[15];
+    double result[16];
     run_test(result);
+    FILE* res = fopen("./file-cache-res.csv", "w");
+    for (int i = 0; i < 16; ++i) {
+        fprintf(res, "%d, %f\n", i, result[i]);
+    }
     return 0;
 }

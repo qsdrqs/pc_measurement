@@ -66,7 +66,6 @@ void run_test(double* result) {
         // read will automatically seek to the next block
         status = read(fd, buf, 512);
         END_MEASUREMENT();
-        CLEAR_CACHE();
         if (status == -1) {
             printf("Error reading file %s\n", filename);
             exit(1);
@@ -92,7 +91,6 @@ void run_test(double* result) {
         seek_status = lseek(fd, offset, SEEK_SET);
         status = read(fd, buf, 512);
         END_MEASUREMENT();
-        CLEAR_CACHE();
         if (seek_status == -1) {
             printf("Error seeking file %s\n", filename);
             exit(1);

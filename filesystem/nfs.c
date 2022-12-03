@@ -42,12 +42,13 @@ uint32_t cycles_high1;
 void run_test(float* result) {
     const char* home = getenv("HOME");
     char filename[100];
-    sprintf(filename, "%s/%s", home, "tmp-files/14");
+    sprintf(filename, "%s/%s", home, "mymnt/14");
 
     int fd;
     fd = open(filename, O_DIRECT);  // the file size is 16GB
     if (fd == -1) {
         printf("Error opening file %s\n", filename);
+        exit(1);
     }
 
     char buf[512];  // block size is 512 bytes
@@ -66,15 +67,9 @@ void run_test(float* result) {
         // read will automatically seek to the next block
         status = read(fd, buf, 512);
         END_MEASUREMENT();
-        CLEAR_CACHE();
         if (status == -1) {
             printf("Error reading file %s\n", filename);
             exit(1);
-        }
-        for (int i = 0; i < 512; ++i) {
-            if (buf[i] != 'a') {
-                printf("Error checking buffer at %d\n", i);
-            }
         }
         sequencial_clocks += GET_MEASUREMENT();
     }
@@ -83,16 +78,12 @@ void run_test(float* result) {
     int seek_status;
     // start random testing
     for (int i = 0; i < 1024; ++i) {
-        uint64_t offset = rand() * 512;
-        while (offset > (uint64_t)1024 * 1024 * 1024 * 16) {
-            offset = rand() * 512;
-        }
+        uint64_t offset = rand() % (1024 * 1024 * 100); // first 100 MB
         CLEAR_CACHE();
         START_MEASUREMENT();
         seek_status = lseek(fd, offset, SEEK_SET);
         status = read(fd, buf, 512);
         END_MEASUREMENT();
-        CLEAR_CACHE();
         if (seek_status == -1) {
             printf("Error seeking file %s\n", filename);
             exit(1);
@@ -100,11 +91,6 @@ void run_test(float* result) {
         if (status == -1) {
             printf("Error reading file %s\n", filename);
             exit(1);
-        }
-        for (int i = 0; i < 512; ++i) {
-            if (buf[i] != 'a') {
-                printf("Error checking buffer at %d\n", i);
-            }
         }
         random_clocks += GET_MEASUREMENT();
     }

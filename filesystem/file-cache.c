@@ -45,7 +45,6 @@ void run_test(float* result) {
 
         FILE* stream;
         char buf[512];
-        int fd;
         int status;
         printf("current file: %s\n", filename);
         // warm up cache
@@ -61,7 +60,6 @@ void run_test(float* result) {
         }
         while (fread(buf, 1, 512, stream) > 0) {
         }
-        close(fd);
 
         // start testing
         stream = fopen(filename, "r");
@@ -81,7 +79,6 @@ void run_test(float* result) {
             printf("Error reading file\n");
             exit(1);
         }
-        close(fd);
 
         uint64_t cycles = GET_MEASUREMENT();
         printf("cycles: %lu\n", cycles);

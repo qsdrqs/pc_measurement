@@ -114,7 +114,7 @@ void run_test(float* result) {
     printf("sequencial_clocks: %lu, random_clocks: %lu\n",
            sequencial_clocks / 1024, random_clocks / 1024);
 
-    // transform to us
+    // transform to nanoseconds
     printf("sequencial time per block: %f us, random time per block: %f us\n",
            sequencial_clocks / 1024.0 / (FREQ * 1e3), random_clocks / 1024.0 / (FREQ * 1e3));
 }

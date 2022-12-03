@@ -39,7 +39,7 @@ uint32_t cycles_high1;
 #define FREQ 3.6
 #define CLEAR_CACHE() system("sync; echo 3 > /proc/sys/vm/drop_caches")
 
-void run_test(float* result) {
+void run_test(double* result) {
     const char* home = getenv("HOME");
     char filename[100];
     sprintf(filename, "%s/%s", home, "tmp-files/14");
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
         printf("You need to be root to run this test\n");
         exit(1);
     }
-    float result[15];
+    double result[15];
     run_test(result);
     return 0;
 }

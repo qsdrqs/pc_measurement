@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #define __USE_GNU
@@ -39,84 +40,92 @@ uint32_t cycles_high1;
 #define FREQ 3.6
 #define CLEAR_CACHE() system("sync; echo 3 > /proc/sys/vm/drop_caches")
 
-void run_test(float* result) {
-    const char* home = getenv("HOME");
-    char filename[100];
-    sprintf(filename, "%s/%s", home, "tmp-files/14");
-
-    int fd;
-    fd = open(filename, O_DIRECT);  // the file size is 16GB
-    if (fd == -1) {
-        printf("Error opening file %s\n", filename);
-    }
-
-    char buf[512];  // block size is 512 bytes
-    // start sequencial testing
-    uint64_t sequencial_clocks = 0;
-    srand(time(NULL));
-    int status;
-    status = lseek(fd, 0, SEEK_SET);
-    if (status == -1) {
-        printf("Error seeking file %s\n", filename);
-        exit(1);
-    }
-    for (int i = 0; i < 1024; ++i) {
+void run_test(double* result) {
+    // 1 to 21 processes, one master and 1-20 slaves
+    for (int i = 0; i < 20; ++i) {
         CLEAR_CACHE();
-        START_MEASUREMENT();
-        // read will automatically seek to the next block
-        status = read(fd, buf, 512);
-        END_MEASUREMENT();
-        CLEAR_CACHE();
+        const char* base = "./build/contention-files/";
+        char filename[100];
+        int id = 0;
+        int syncpipe[2];  // 0: read, 1: write, first pipe is used to read from
+                          // child, second pipe is used to write to child
+        int respipe[2];   // 0: read, 1: write
+        int status = pipe(syncpipe);
         if (status == -1) {
-            printf("Error reading file %s\n", filename);
+            perror("pipe");
             exit(1);
         }
-        for (int i = 0; i < 512; ++i) {
-            if (buf[i] != 'a') {
-                printf("Error checking buffer at %d\n", i);
+        status = pipe(respipe);
+        if (status == -1) {
+            perror("pipe");
+            exit(1);
+        }
+        for (int j = 0; j <= i; ++j) {
+            int pid = fork();
+            if (pid == 0) {
+                // child process
+                id = j + 1;
+                break;
             }
         }
-        sequencial_clocks += GET_MEASUREMENT();
-    }
+        if (id == 0) {
+            char buf[i + 1];
+            usleep(1000);  // wait for all processes to be ready
+            write(syncpipe[1], buf, i + 1);
+        } else {
+            sprintf(filename, "%s%d", base, id - 1);
+            int fd;
+            fd = open(filename, O_DIRECT);  // the file size is 50MB
 
-    uint64_t random_clocks = 0;
-    int seek_status;
-    // start random testing
-    for (int i = 0; i < 1024; ++i) {
-        uint64_t offset = rand() * 512;
-        while (offset > (uint64_t)1024 * 1024 * 1024 * 16) {
-            offset = rand() * 512;
-        }
-        CLEAR_CACHE();
-        START_MEASUREMENT();
-        seek_status = lseek(fd, offset, SEEK_SET);
-        status = read(fd, buf, 512);
-        END_MEASUREMENT();
-        CLEAR_CACHE();
-        if (seek_status == -1) {
-            printf("Error seeking file %s\n", filename);
-            exit(1);
-        }
-        if (status == -1) {
-            printf("Error reading file %s\n", filename);
-            exit(1);
-        }
-        for (int i = 0; i < 512; ++i) {
-            if (buf[i] != 'a') {
-                printf("Error checking buffer at %d\n", i);
+            if (fd == -1) {
+                printf("Error opening file %s\n", filename);
+                exit(1);
             }
+
+            char buf[512];  // block size is 512 bytes
+            lseek(fd, 0, SEEK_SET);
+
+            uint64_t clocks = 0;
+
+            char syncbuf[1];
+            read(syncpipe[0], syncbuf, 1);  // sync with other processes
+            for (int j = 0; j < 102400; ++j) {
+                START_MEASUREMENT();
+                status = read(fd, buf, 512);
+                END_MEASUREMENT();
+                if (status == -1) {
+                    printf("Error reading file %s\n", filename);
+                    exit(1);
+                }
+                clocks += GET_MEASUREMENT();
+            }
+
+            close(fd);
+            write(respipe[1], &clocks, sizeof(clocks));
         }
-        random_clocks += GET_MEASUREMENT();
+
+        // get the result
+        if (id == 0) {
+            // only parent process need to report the result
+            uint64_t result_clocks[i + 1];
+            uint64_t total_clocks = 0;
+            for (int j = 0; j <= i; ++j) {
+                read(respipe[0], &result_clocks[j], sizeof(uint64_t));
+                total_clocks += result_clocks[j];
+            }
+            double avg_clocks = (double)total_clocks / (i + 1);
+            printf("Number of processes: %d, clocks: %lf, time: %f us\n", i + 1,
+                   avg_clocks, avg_clocks / 102400.0 / (FREQ * 1e3));
+            result[i] = avg_clocks / (102400.0 * FREQ * 1e3);
+            close(syncpipe[0]);
+            close(syncpipe[1]);
+            close(respipe[0]);
+            close(respipe[1]);
+        } else {
+            // child process
+            exit(0);
+        }
     }
-
-    close(fd);
-
-    printf("sequencial_clocks: %lu, random_clocks: %lu\n",
-           sequencial_clocks / 1024, random_clocks / 1024);
-
-    // transform to nanoseconds
-    printf("sequencial time per block: %f us, random time per block: %f us\n",
-           sequencial_clocks / 1024.0 / (FREQ * 1e3), random_clocks / 1024.0 / (FREQ * 1e3));
 }
 
 int main(int argc, char* argv[]) {
@@ -124,7 +133,7 @@ int main(int argc, char* argv[]) {
         printf("You need to be root to run this test\n");
         exit(1);
     }
-    float result[15];
+    double result[20];
     run_test(result);
     return 0;
 }

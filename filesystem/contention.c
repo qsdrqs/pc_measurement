@@ -47,17 +47,16 @@ void run_test(double* result) {
         const char* base = "./build/contention-files/";
         char filename[100];
         int id = 0;
-        int syncpipe[2];  // 0: read, 1: write, first pipe is used to read from
-                          // child, second pipe is used to write to child
-        int respipe[2];   // 0: read, 1: write
+        int syncpipe[2];  // 0: read, 1: write, this pipe is used to sync the slaves
+        int respipe[2];   // 0: read, 1: write, this pipe is used to get the results from the slaves
         int status = pipe(syncpipe);
         if (status == -1) {
-            perror("pipe");
+            perror("sync pipe");
             exit(1);
         }
         status = pipe(respipe);
         if (status == -1) {
-            perror("pipe");
+            perror("sync pipe");
             exit(1);
         }
         for (int j = 0; j <= i; ++j) {

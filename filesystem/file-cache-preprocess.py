@@ -1,6 +1,9 @@
 import os
 from math import log
 
+# NOTE: this script will use up a lot amount of disk space, do not run
+#       this script unless you really want to run the test
+
 if __name__ == '__main__':
     basepath = os.environ['HOME'] + "/tmp-files"
     if not os.path.exists(basepath):

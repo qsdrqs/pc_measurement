@@ -1,13 +1,13 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <stdint.h>
+#include <unistd.h>
 
 #define __USE_GNU
 #include <fcntl.h>
-#include <time.h>
 #include <math.h>
+#include <time.h>
 
 uint32_t cycles_low0;
 uint32_t cycles_high0;
@@ -40,66 +40,82 @@ uint32_t cycles_high1;
 #define CLEAR_CACHE() system("sync; echo 3 > /proc/sys/vm/drop_caches")
 
 void run_test(float* result) {
-    const char* filename = "/mnt/Users/qsdrqs/14";
+    const char* home = getenv("HOME");
+    char filename[100];
+    sprintf(filename, "%s/%s", home, "tmp-files/14");
 
     int fd;
-    fd = open(filename, O_RDONLY);
+    fd = open(filename, O_DIRECT);  // the file size is 16GB
     if (fd == -1) {
         printf("Error opening file %s\n", filename);
     }
 
-    char buf[512]; // block size is 512 bytes
+    char buf[512];  // block size is 512 bytes
     // start sequencial testing
     uint64_t sequencial_clocks = 0;
     srand(time(NULL));
-    uint64_t base = 0;
+    int status;
+    status = lseek(fd, 0, SEEK_SET);
+    if (status == -1) {
+        printf("Error seeking file %s\n", filename);
+    }
     for (int i = 0; i < 1024; ++i) {
-        uint64_t offset = base + i * 512;
-        int status;
+        CLEAR_CACHE();
         START_MEASUREMENT();
-        status = lseek(fd, offset, SEEK_SET);
+        // read will automatically seek to the next block
         status = read(fd, buf, 512);
         END_MEASUREMENT();
         if (status == -1) {
             printf("Error reading file %s\n", filename);
         }
-
+        for (int i = 0; i < 512; ++i) {
+            if (buf[i] != 'a') {
+                printf("Error checking buffer at %d\n", i);
+            }
+        }
         sequencial_clocks += GET_MEASUREMENT();
     }
 
     uint64_t random_clocks = 0;
+    int seek_status;
     // start random testing
     for (int i = 0; i < 1024; ++i) {
-        uint64_t offset = rand();
-        int a, b;
+        uint64_t offset = rand() * 512;
+        while (offset > (uint64_t)1024 * 1024 * 1024 * 16) {
+            offset = rand() * 512;
+        }
+        CLEAR_CACHE();
         START_MEASUREMENT();
-        a = lseek(fd, offset, SEEK_SET);
-        b = read(fd, buf, 512);
+        seek_status = lseek(fd, offset, SEEK_SET);
+        status = read(fd, buf, 512);
         END_MEASUREMENT();
-        if (a < 0) {
-            perror("lseek2");
-            printf("offset: %lu\n", offset);
-            exit(-1);
+        if (seek_status == -1) {
+            printf("Error seeking file %s\n", filename);
+            exit(1);
         }
-        if (b < 0) {
-            perror("read2");
-            exit(-1);
+        if (status == -1) {
+            printf("Error reading file %s\n", filename);
+            exit(1);
         }
-
+        for (int i = 0; i < 512; ++i) {
+            if (buf[i] != 'a') {
+                printf("Error checking buffer at %d\n", i);
+            }
+        }
         random_clocks += GET_MEASUREMENT();
     }
 
     close(fd);
 
-
-    printf("sequencial_clocks: %lu, random_clocks: %lu\n", sequencial_clocks, random_clocks);
+    printf("sequencial_clocks: %lu, random_clocks: %lu\n",
+           sequencial_clocks / 1024, random_clocks / 1024);
 
     // transform to nanoseconds
-    printf("sequencial time per block: %f ns, random time per block: %f ns\n", sequencial_clocks / 1000.0 / FREQ, random_clocks / 1000.0 / FREQ);
+    printf("sequencial time per block: %f us, random time per block: %f us\n",
+           sequencial_clocks / 1024.0 / (FREQ * 1e3), random_clocks / 1024.0 / (FREQ * 1e3));
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     if (getuid() != 0) {
         printf("You need to be root to run this test\n");
         exit(1);

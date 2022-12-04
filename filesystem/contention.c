@@ -134,5 +134,9 @@ int main(int argc, char* argv[]) {
     }
     double result[20];
     run_test(result);
+    FILE* res = fopen("./contention-res.csv", "w");
+    for (int i = 0; i < 20; ++i) {
+        fprintf(res, "%d, %f\n", i + 1, result[i]);
+    }
     return 0;
 }

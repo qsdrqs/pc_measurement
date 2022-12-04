@@ -42,7 +42,7 @@ uint32_t cycles_high1;
 void run_test(double* result_seq, double* result_rand) {
     for (int i = 0; i < 11; ++i) {
         char filename[100];
-        sprintf(filename, "%s/%d", "./build/nfs/", i);
+        sprintf(filename, "%s/%d", "./build/nfs-files", i);
         int fd;
         fd = open(filename, O_DIRECT);  // the file size is 16GB
         if (fd == -1) {
@@ -72,13 +72,14 @@ void run_test(double* result_seq, double* result_rand) {
             // read will automatically seek to the next block
             status = read(fd, buf, 512);
             END_MEASUREMENT();
-            if (status == -1) {
+            if (status != 512) {
                 printf("Error reading file %s\n", filename);
+                printf("read: %d\n", status);
                 exit(1);
             }
             for (int j = 0; j < 512; ++j) {
                 if (buf[j] != 'a') {
-                    printf("Error checking buffer at %d\n", j);
+                    printf("Error checking buffer at %d, it's %d\n", j, buf[j]);
                     exit(1);
                 }
             }
@@ -89,7 +90,7 @@ void run_test(double* result_seq, double* result_rand) {
         int seek_status;
         // start random testing
         for (int i = 0; i < size / 512; ++i) {
-            uint64_t offset = rand() % size;
+            uint64_t offset = rand() % (size - 512);
             CLEAR_CACHE();
             START_MEASUREMENT();
             seek_status = lseek(fd, offset, SEEK_SET);
@@ -99,13 +100,13 @@ void run_test(double* result_seq, double* result_rand) {
                 printf("Error seeking file %s\n", filename);
                 exit(1);
             }
-            if (status == -1) {
+            if (status != 512) {
                 printf("Error reading file %s\n", filename);
                 exit(1);
             }
             for (int j = 0; j < 512; ++j) {
                 if (buf[j] != 'a') {
-                    printf("Error checking buffer at %d\n", j);
+                    printf("Error checking buffer at %d, it's %d\n", j, buf[j]);
                     exit(1);
                 }
             }
@@ -136,7 +137,7 @@ int main(int argc, char* argv[]) {
     double result_seq[11];
     double result_rand[11];
     run_test(result_seq, result_rand);
-    FILE* res = fopen("./sequencial-random-res.csv", "w");
+    FILE* res = fopen("./nfs-res.csv", "w");
     for (int i = 0; i < 11; ++i) {
         fprintf(res, "%d, %f, %f\n", i, result_seq[i], result_rand[i]);
     }

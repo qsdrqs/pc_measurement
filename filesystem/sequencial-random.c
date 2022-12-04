@@ -42,7 +42,7 @@ uint32_t cycles_high1;
 void run_test(double* result_seq, double* result_rand) {
     for (int i = 0; i < 11; ++i) {
         char filename[100];
-        sprintf(filename, "%s/%d", "./build/file-read/", i);
+        sprintf(filename, "%s/%d", "./build/file-read", i);
         int fd;
         fd = open(filename, O_DIRECT);
         if (fd == -1) {
@@ -90,7 +90,7 @@ void run_test(double* result_seq, double* result_rand) {
         int seek_status;
         // start random testing
         for (int i = 0; i < size / 512; ++i) {
-            uint64_t offset = rand() % size;
+            uint64_t offset = rand() % (size - 512);
             CLEAR_CACHE();
             START_MEASUREMENT();
             seek_status = lseek(fd, offset, SEEK_SET);

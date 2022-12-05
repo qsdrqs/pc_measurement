@@ -30,3 +30,8 @@ For other two tests, simply run `./filesystem/file-read-preprocess.py` and
 `./filesystem/contention-preprocess.py` to generate testing files.
 
 For nfs test, you needs to mount the nfs directory under `./filesystem/build/nfs-files/`, and copy all files under `./filesystem/build/file-read/` into this directory before run the test.
+
+## Plots
+
+Some results can be plotted, there are several python files that end with `plot.py`, you
+can run these files to get plotted figures.
